@@ -1,0 +1,11 @@
+[package]
+name = "siriuslatte/cue"
+description = "Luau runtime for compiled Cue programs."
+version = "0.1.0-dev.0"
+license = "MIT"
+authors = ["Ademir Sánchez"]
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+include = ["src/**", "default.project.json", "wally.toml", "README.md", "LICENSE"]
+
+[dependencies]
