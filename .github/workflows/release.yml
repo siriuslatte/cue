@@ -68,7 +68,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, target: linux-x86_64, binary: cue }
+          - { os: ubuntu-22.04, target: linux-x86_64, binary: cue }
           - { os: macos-latest, target: macos-aarch64, binary: cue }
           - { os: macos-15-intel, target: macos-x86_64, binary: cue }
           - { os: windows-latest, target: windows-x86_64, binary: cue.exe }
@@ -98,6 +98,8 @@ jobs:
 
   publish:
     needs: [source, package]
+    if: >-
+      !cancelled() && needs.source.result == 'success' && needs.package.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
