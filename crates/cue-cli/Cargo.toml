@@ -1,0 +1,20 @@
+[package]
+name = "cue-cli"
+description = "Compile Cue source into Luau."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "cue"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+cue-compiler.workspace = true
+
+[lints]
+workspace = true
