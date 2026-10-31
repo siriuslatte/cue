@@ -1,0 +1,22 @@
+---
+source: crates/cue-compiler/tests/compile.rs
+assertion_line: 25
+description: "actor NPC \"first\"\nactor NPC \"second\"\n\nscene INTRO {}\nscene INTRO {}\n"
+expression: errors
+---
+[
+    Diagnostic {
+        message: "actor 'NPC' is already defined",
+        span: Span {
+            start: 24,
+            end: 27,
+        },
+    },
+    Diagnostic {
+        message: "scene 'INTRO' is already defined",
+        span: Span {
+            start: 59,
+            end: 64,
+        },
+    },
+]

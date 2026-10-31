@@ -31,6 +31,8 @@ jobs:
 
   test:
     runs-on: ${{ matrix.os }}
+    env:
+      INSTA_UPDATE: "no"
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +52,16 @@ jobs:
           version: v1.2.0
       - run: stylua --check runtime/src examples tests
       - run: luau-analyze runtime/src/init.luau
-      - run: lune run tests/runtime.luau
-      - run: cargo run --locked -p cue-cli -- build examples/hello.cue -o build/hello.luau
-      - run: lune run tests/integration.luau build/hello.luau
+      - run: cargo build --locked -p cue-cli
+      - name: Test runtime and compiled programs
+        run: |
+          mkdir -p build
+          lest --forbid-only --min 90 --coverage-format=lcov > build/runtime.lcov
       - run: rojo build runtime/default.project.json -o build/Cue.rbxm
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: runtime-coverage
+          path: build/runtime.lcov
+          if-no-files-found: ignore
+          retention-days: 7

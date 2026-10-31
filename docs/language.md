@@ -36,3 +36,10 @@ The output is a Luau data module accepted by the runtime. Version 1 contains a
 `scenes` table whose entries are ordered `{ actor, text }` records. This format
 is internal and can change as the language develops; compiler and runtime
 versions are released together.
+
+## Semantics
+
+[Language semantics](semantics.md) defines values, operators, scope, evaluation
+order, and errors for the language as it develops. [Semantics examples](semantics-examples.md)
+records the expected outcomes and distinguishes implemented cases from future
+conformance cases.

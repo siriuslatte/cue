@@ -1,113 +1,119 @@
-use std::{
-    fs,
-    path::PathBuf,
-    process::Command,
-    sync::atomic::{AtomicU64, Ordering},
-};
+use assert_cmd::cargo::cargo_bin_cmd;
+use assert_fs::{TempDir, prelude::*};
+use predicates::prelude::*;
+use rstest::{fixture, rstest};
 
-static NEXT_ID: AtomicU64 = AtomicU64::new(0);
-
-struct Project(PathBuf);
-
-impl Project {
-    fn new(source: &str) -> Self {
-        let path = std::env::temp_dir().join(format!(
-            "cue-test-{}-{}",
-            std::process::id(),
-            NEXT_ID.fetch_add(1, Ordering::Relaxed)
-        ));
-        fs::create_dir_all(&path).unwrap();
-        fs::write(path.join("main.cue"), source).unwrap();
-        Self(path)
-    }
-
-    fn command(&self) -> Command {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_cue"));
-        command.current_dir(&self.0);
-        command
-    }
+#[fixture]
+fn project() -> TempDir {
+    let project = TempDir::new().unwrap();
+    project
+        .child("main.cue")
+        .write_str("scene INTRO {}")
+        .unwrap();
+    project
 }
 
-impl Drop for Project {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
-
-#[test]
-fn builds_a_module_and_creates_output_directories() {
-    let project = Project::new("scene INTRO {}");
-    let output = project
-        .command()
+#[rstest]
+fn builds_a_module_and_creates_output_directories(project: TempDir) {
+    cargo_bin_cmd!("cue")
+        .current_dir(project.path())
         .args(["build", "main.cue", "-o", "build/main.luau"])
-        .output()
-        .unwrap();
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(
-        fs::read_to_string(project.0.join("build/main.luau"))
-            .unwrap()
-            .contains("version = 1")
-    );
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+
+    project
+        .child("build/main.luau")
+        .assert(predicate::str::contains("version = 1"));
 }
 
-#[test]
-fn invalid_source_does_not_replace_existing_output() {
-    let project = Project::new("scene INTRO { [UNKNOWN] \"Hello\" }");
-    fs::write(project.0.join("main.luau"), "previous build").unwrap();
-    let output = project
-        .command()
+#[rstest]
+fn invalid_source_does_not_replace_existing_output(project: TempDir) {
+    project
+        .child("main.cue")
+        .write_str("scene INTRO { [UNKNOWN] \"Hello\" }")
+        .unwrap();
+    project
+        .child("main.luau")
+        .write_str("previous build")
+        .unwrap();
+
+    cargo_bin_cmd!("cue")
+        .current_dir(project.path())
         .args(["build", "main.cue", "-o", "main.luau"])
-        .output()
-        .unwrap();
-    assert!(!output.status.success());
-    assert!(
-        String::from_utf8_lossy(&output.stderr).contains("main.cue:1:16: error: unknown actor")
-    );
-    assert_eq!(
-        fs::read_to_string(project.0.join("main.luau")).unwrap(),
-        "previous build"
-    );
+        .assert()
+        .code(1)
+        .stdout("")
+        .stderr(predicate::str::contains(
+            "main.cue:1:16: error: unknown actor 'UNKNOWN'",
+        ));
+
+    project.child("main.luau").assert("previous build");
 }
 
-#[test]
-fn refuses_to_overwrite_the_source() {
-    let project = Project::new("scene INTRO {}");
-    let output = project
-        .command()
-        .args(["build", "main.cue", "-o", "main.cue"])
-        .output()
+#[rstest]
+fn invalid_source_does_not_create_output(project: TempDir) {
+    project
+        .child("main.cue")
+        .write_str("scene INTRO {")
         .unwrap();
-    assert!(!output.status.success());
-    assert_eq!(
-        fs::read_to_string(project.0.join("main.cue")).unwrap(),
-        "scene INTRO {}"
-    );
+
+    cargo_bin_cmd!("cue")
+        .current_dir(project.path())
+        .args(["build", "main.cue", "-o", "build/main.luau"])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains("expected '}' to close the scene"));
+
+    project.child("build").assert(predicate::path::missing());
 }
 
-#[test]
-fn check_has_no_output_side_effects() {
-    let project = Project::new("scene INTRO {}");
-    let output = project
-        .command()
+#[rstest]
+#[case::same_path("main.cue")]
+#[case::relative_alias("./main.cue")]
+fn refuses_to_overwrite_the_source(project: TempDir, #[case] output: &str) {
+    cargo_bin_cmd!("cue")
+        .current_dir(project.path())
+        .args(["build", "main.cue", "-o", output])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains(
+            "output must be different from the source file",
+        ));
+
+    project.child("main.cue").assert("scene INTRO {}");
+}
+
+#[rstest]
+fn check_has_no_output_side_effects(project: TempDir) {
+    cargo_bin_cmd!("cue")
+        .current_dir(project.path())
         .args(["check", "main.cue"])
-        .output()
-        .unwrap();
-    assert!(output.status.success());
-    assert_eq!(fs::read_dir(&project.0).unwrap().count(), 1);
+        .assert()
+        .success()
+        .stdout("")
+        .stderr("");
+
+    assert_eq!(std::fs::read_dir(project.path()).unwrap().count(), 1);
+    project.child("main.cue").assert("scene INTRO {}");
+}
+
+#[rstest]
+fn missing_input_is_an_error(project: TempDir) {
+    cargo_bin_cmd!("cue")
+        .current_dir(project.path())
+        .args(["check", "missing.cue"])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains("missing.cue"));
 }
 
 #[test]
-fn missing_input_is_an_error() {
-    let project = Project::new("");
-    let output = project
-        .command()
-        .args(["check", "missing.cue"])
-        .output()
-        .unwrap();
-    assert!(!output.status.success());
-    assert!(String::from_utf8_lossy(&output.stderr).contains("missing.cue"));
+fn help_lists_the_available_commands() {
+    cargo_bin_cmd!("cue")
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("build").and(predicate::str::contains("check")));
 }

@@ -5,3 +5,6 @@
 *.rbxm
 *.rbxmx
 .DS_Store
+/.lest/
+*.snap.new
+*.pending-snap
