@@ -25,7 +25,7 @@ fn builds_a_module_and_creates_output_directories(project: TempDir) {
 
     project
         .child("build/main.luau")
-        .assert(predicate::str::contains("version = 1"));
+        .assert(predicate::str::contains("version = 2"));
 }
 
 #[rstest]

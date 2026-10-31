@@ -1,0 +1,56 @@
+---
+source: crates/cue-compiler/tests/compile.rs
+description: "actor NPC \"mechanic\"\nscene INTRO {\n    var parts = 1\n    parts = parts + 2\n    if parts >= 3 {\n        [NPC] (\"Found \" .. string(parts) .. \" parts\")\n    } else {\n        [NPC] \"Keep looking.\"\n    }\n}\n"
+expression: output
+---
+-- Compiled by Cue.
+return {
+    version = 2,
+    scenes = {
+        ["INTRO"] = function(cue)
+            local v0
+            do
+                cue.tick("INTRO:3:5")
+                v0 = 1
+            end
+            do
+                cue.tick("INTRO:4:5")
+                local t0
+                do
+                    t0 = cue.number(v0 + 2, "INTRO:4:13")
+                end
+                v0 = t0
+            end
+            do
+                cue.tick("INTRO:5:5")
+                local t1
+                do
+                    t1 = v0 >= 3
+                end
+                if t1 then
+                    do
+                        cue.tick("INTRO:6:9")
+                        local t2
+                        do
+                            local t3
+                            do
+                                local t4
+                                do
+                                    t4 = tostring(v0)
+                                end
+                                t3 = t4 .. " parts"
+                            end
+                            t2 = "Found " .. t3
+                        end
+                        cue.dialogue("mechanic", t2)
+                    end
+                else
+                    do
+                        cue.tick("INTRO:8:9")
+                        cue.dialogue("mechanic", "Keep looking.")
+                    end
+                end
+            end
+        end,
+    },
+}
