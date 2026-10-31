@@ -6,8 +6,8 @@ Designers write Cue. A Rust compiler generates Luau, and a small runtime connect
 the result to the game's event bus. Programmers expose game capabilities;
 designers decide how they fit together.
 
-Cue is in early development. The current compiler supports actors and sequential
-dialogue scenes.
+Cue is in early development. Scenes support typed locals, records, enums,
+lists, conditions, and bounded loops. Game capability contracts are next.
 
 ```text
 actor MECHANIC "mechanic"

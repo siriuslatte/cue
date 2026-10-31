@@ -1,15 +1,17 @@
 ---
 source: crates/cue-compiler/tests/compile.rs
-assertion_line: 13
 description: "actor INTRO \"mechanic\"\n\nscene INTRO {\n    [INTRO] \"Hello\"\n}\n"
 expression: output
 ---
 -- Compiled by Cue.
 return {
-    version = 1,
+    version = 2,
     scenes = {
-        ["INTRO"] = {
-            { actor = "mechanic", text = "Hello" },
-        },
+        ["INTRO"] = function(cue)
+            do
+                cue.tick("INTRO:4:5")
+                cue.dialogue("mechanic", "Hello")
+            end
+        end,
     },
 }

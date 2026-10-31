@@ -20,11 +20,14 @@ When a scene contains two lines, starting it emits only the first line.
 Acknowledging that step emits the second. A stale acknowledgement does not skip
 a line; acknowledging the second step completes the session.
 
-## Specified expressions
+## Expressions
 
-The remaining cases describe features that are not implemented yet. Test an
-expression as the initializer of `let result = expression` in a scene. Check
-errors reject the program; runtime errors occur only if the expression runs.
+These cases are implemented and covered by the compiler and runtime suites.
+Use an expression as the initializer of `let result = expression` in a scene.
+Check errors reject the program; runtime errors occur only if the expression runs.
+The [expression fixture](../crates/cue-compiler/tests/fixtures/conformance/expressions.cue)
+keeps the arithmetic and boolean case IDs. The [value fixture](../crates/cue-compiler/tests/fixtures/conformance/values.cue)
+covers optionals, copies, scopes, and enum payloads.
 
 ### Arithmetic
 
@@ -82,7 +85,9 @@ let name: string? = ""
 | O05 | `missing + 1` | Check error: optional value must be handled |
 | O06 | `count ?? (1 / 0)` | `number`, `0`; fallback is not evaluated |
 
-## Specified scope rules
+## Scope rules
+
+S01 through S05 are implemented. S06 requires scene calls.
 
 ### S01: block shadowing
 
@@ -117,6 +122,9 @@ let result = first[1] ?? 0
 
 ## Specified evaluation order
 
+Query calls require the game contract work. Until then, expression tests check
+source order with failing arithmetic and index operations.
+
 Use a mock query `Probe.read(label: string) -> number` that records its calls in
 the test trace. This trace is test instrumentation, not a game-state mutation.
 
@@ -141,7 +149,8 @@ The trace is `read("first")`, `read("second")`, then `combine(a: 2, b: 1)`.
 
 ## Specified execution outcomes
 
-These cases need a runtime harness with controllable commands and events.
+X02 and X06 are covered by the current suites. The other cases need capability
+contracts and scene calls.
 
 | ID | Scenario | Expected outcome |
 | --- | --- | --- |

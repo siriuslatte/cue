@@ -1,11 +1,10 @@
 # Language semantics
 
-These rules define the behavior to preserve as Cue grows. The current compiler
-supports the subset described in [Language](language.md). The other constructs
-below are specified for implementation; they are not available in the CLI yet.
-Runtime rules such as source-mapped errors and ownership of suspended commands
-also require later work. [Examples](semantics-examples.md) separate current
-behavior from specified outcomes.
+These rules define the behavior to preserve as Cue grows. [Language](language.md)
+describes the implemented syntax. Values, expressions, local scope, conditionals,
+list iteration, and dialogue are implemented. Handles, capability calls, scene
+calls, and owned commands describe later work. [Examples](semantics-examples.md)
+separate current behavior from specified outcomes.
 
 ## Values
 
@@ -113,8 +112,12 @@ fallback must be `T`. The fallback runs only when the left side is `none`.
 A present `0`, `false`, or empty string is preserved.
 
 An optional value must be narrowed or given a fallback before arithmetic, field
-access, or another operation requiring `T`. A game adapter translates an absent
-optional Luau value to `none` at the contract boundary. It validates required
+access, or another operation requiring `T`. Assigning a new value invalidates
+the local's narrowing. A loop cannot rely on an outside narrowing for a local
+it replaces; check that local inside the loop.
+
+A game adapter translates an absent optional Luau value to `none` at the
+contract boundary. It validates required
 fields and types before delivering values to Cue.
 
 ## Bindings and scope
@@ -122,6 +125,11 @@ fields and types before delivering values to Cue.
 `let name = expression` creates an immutable local. `var name = expression`
 creates a mutable local; `name = expression` replaces its value. Assignment to
 a `let` binding or to a name that was never declared is a compile error.
+
+A `for item in list` loop evaluates its list once and visits that snapshot in
+order. Its item binding is immutable and belongs to the loop body. Replacing or
+updating the original list does not change the remaining iterations. There is
+no unbounded loop construct.
 
 A local belongs to its enclosing scene or block. It becomes visible after its
 initializer finishes. An initializer can read an outer binding with the same

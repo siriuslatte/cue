@@ -52,6 +52,7 @@ fn reports_character_locations(#[case] source: &str, #[case] expected: (usize, u
 
 #[rstest]
 #[case::example(include_str!("../../../examples/hello.cue"))]
+#[case::repair(include_str!("../../../examples/repair.cue"))]
 #[case::empty("")]
 #[case::comment("# An empty content file is valid.\n")]
 fn accepts_complete_programs(#[case] source: &str) {
