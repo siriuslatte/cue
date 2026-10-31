@@ -44,6 +44,16 @@ Use `lune run examples/hello.luau` to run the example after compiling it.
 Lune tests exercise real Luau execution; Roblox service integration still needs
 Studio tests when adapters start using engine APIs.
 
+## Rust tests
+
+Rust tests use rstest for fixtures and named cases, assert_cmd and assert_fs for
+CLI behavior, and Insta for compiler output and diagnostic snapshots.
+
+Source fixtures live in `crates/cue-compiler/tests/fixtures/`. Their snapshots
+live in `crates/cue-compiler/tests/snapshots/`. Review changes with `cargo insta review`
+after installing the optional cargo-insta tool. Do not accept snapshot updates
+without checking their contents. CI compares snapshots without updating them.
+
 ## Changes
 
 Branch from `main`. Use `feature/`, `fix/`, `refactor/`, `docs/`, `test/`, `ci/`,

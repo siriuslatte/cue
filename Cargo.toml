@@ -10,8 +10,13 @@ license = "MIT"
 repository = "https://github.com/siriuslatte/cue"
 
 [workspace.dependencies]
-cue-compiler = { path = "crates/cue-compiler" }
+assert_cmd = "2.2"
+assert_fs = "1.1"
 clap = { version = "4.5", features = ["derive"] }
+cue-compiler = { path = "crates/cue-compiler" }
+insta = { version = "1.49", default-features = false, features = ["colors"] }
+predicates = "3.1"
+rstest = { version = "0.28", default-features = false }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

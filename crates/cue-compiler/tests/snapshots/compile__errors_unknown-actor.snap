@@ -1,0 +1,15 @@
+---
+source: crates/cue-compiler/tests/compile.rs
+assertion_line: 25
+description: "scene INTRO {\n    [MISSING] \"Hello\"\n}\n"
+expression: errors
+---
+[
+    Diagnostic {
+        message: "unknown actor 'MISSING'",
+        span: Span {
+            start: 19,
+            end: 26,
+        },
+    },
+]

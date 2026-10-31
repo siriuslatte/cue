@@ -1,0 +1,16 @@
+---
+source: crates/cue-compiler/tests/compile.rs
+assertion_line: 13
+description: "scene INTRO {\n    [NPC] \"First line\"\n    [NPC] \"Second line\"\n}\n\nactor NPC \"mechanic\"\n"
+expression: output
+---
+-- Compiled by Cue.
+return {
+    version = 1,
+    scenes = {
+        ["INTRO"] = {
+            { actor = "mechanic", text = "First line" },
+            { actor = "mechanic", text = "Second line" },
+        },
+    },
+}
