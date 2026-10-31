@@ -1,0 +1,10 @@
+[suites.runtime]
+include = ["tests/runtime/**/*.spec.luau"]
+backend = "native"
+
+[suites.integration]
+include = ["tests/integration/**/*.spec.luau"]
+backend = "lune"
+
+[coverage]
+include = ["runtime/src/**/*.luau"]
