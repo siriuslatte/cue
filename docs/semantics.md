@@ -3,6 +3,9 @@
 These rules define the behavior to preserve as Cue grows. The current compiler
 supports the subset described in [Language](language.md). The other constructs
 below are specified for implementation; they are not available in the CLI yet.
+Runtime rules such as source-mapped errors and ownership of suspended commands
+also require later work. [Examples](semantics-examples.md) separate current
+behavior from specified outcomes.
 
 ## Values
 

@@ -2,6 +2,8 @@
 
 - [Architecture](architecture.md)
 - [Language](language.md)
+- [Language semantics](semantics.md)
+- [Semantics examples](semantics-examples.md)
 - [Runtime](../runtime/README.md)
 - [Development](../CONTRIBUTING.md)
 

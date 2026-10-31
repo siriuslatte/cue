@@ -1,0 +1,3 @@
+scene INTRO {
+    [MISSING] "Hello"
+}
