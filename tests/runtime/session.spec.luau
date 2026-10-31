@@ -5,13 +5,13 @@ local describe, it, expect, beforeEach = Lest.describe, Lest.it, Lest.expect, Le
 local Cue = require("../../runtime/src")
 
 local program: Cue.Program = {
-    version = 1,
+    version = 2,
     scenes = {
-        INTRO = {
-            { actor = "mechanic", text = "First line" },
-            { actor = "mechanic", text = "Second line" },
-        },
-        EMPTY = {},
+        INTRO = function(cue)
+            cue.dialogue("mechanic", "First line")
+            cue.dialogue("mechanic", "Second line")
+        end,
+        EMPTY = function() end,
     },
 }
 
