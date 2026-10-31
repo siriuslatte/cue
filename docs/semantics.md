@@ -113,3 +113,110 @@ An optional value must be narrowed or given a fallback before arithmetic, field
 access, or another operation requiring `T`. A game adapter translates an absent
 optional Luau value to `none` at the contract boundary. It validates required
 fields and types before delivering values to Cue.
+
+## Bindings and scope
+
+`let name = expression` creates an immutable local. `var name = expression`
+creates a mutable local; `name = expression` replaces its value. Assignment to
+a `let` binding or to a name that was never declared is a compile error.
+
+A local belongs to its enclosing scene or block. It becomes visible after its
+initializer finishes. An initializer can read an outer binding with the same
+name, but cannot read the local being initialized. A name cannot be declared
+twice in one block. An inner block may shadow an outer local; leaving the block
+restores the outer binding.
+
+Each scene call has fresh locals and its own parameters. A callee resolves names
+in its defining module, not in the caller's locals. Arguments pass by value,
+including lists and records. The call inherits the session context. Persistent
+or shared state must use an explicit scope; a local never becomes player, party,
+or world state implicitly.
+
+Actor and scene declarations belong to their module and are visible throughout
+it, regardless of declaration order. Their names must be unique within their
+respective namespaces. An actor and a scene may share a name. Local bindings use
+the value namespace; they do not replace declarations used by `[ACTOR]` or scene
+calls. An ambiguous imported name must be qualified.
+
+## Evaluation order
+
+Statements in a scene run in source order. A statement finishes or suspends
+before the next statement starts. Declaring an actor or scene does not run game
+behavior. The host chooses the initial scene.
+
+Within an expression:
+
+1. Evaluate the receiver or callee first.
+2. Evaluate operands, arguments, list items, and record fields from left to right
+   in source order, subject to the operator's grouping and short-circuit rules.
+3. Perform the operation after its inputs have been evaluated.
+
+Named arguments still evaluate in source order, not parameter declaration order.
+For assignment, resolve the target and any index before evaluating the new value.
+Update the binding only after evaluation succeeds.
+
+`and`, `or`, and `??` short-circuit:
+
+- `false and expression` returns `false` without evaluating `expression`.
+- `true or expression` returns `true` without evaluating `expression`.
+- A present optional value followed by `??` returns its contents without
+  evaluating the fallback.
+
+All branches still undergo name and type checking. For example,
+`false and missing_name` is a compile error, but
+`false and (1 / 0 > 0)` evaluates to `false`. The division is well-typed and is
+never executed. An optimizer must preserve this distinction.
+
+### Queries, commands, and scene calls
+
+Queries are read-only and return immediately. Expressions cannot yield. Query
+calls keep their source order and call count; the compiler must not reorder,
+duplicate, or merge them.
+
+Commands are explicit operations on the game contract. A command that can suspend
+uses `await`, either as a statement or as the whole initializer of a local.
+It cannot be hidden inside arithmetic or another call's arguments. Its arguments
+are evaluated once before dispatch. The scene resumes once with the declared
+result, or ends because of cancellation or a runtime error.
+
+A scene call waits for the callee to return, including any waits inside it.
+The caller continues afterward. A scene with no declared result returns no
+value and cannot initialize a binding. A scene that declares a result must
+produce it on every returning path. Starting independent work requires an
+explicit concurrency construct.
+
+Dialogue emits one line, then waits for acknowledgement or choice selection.
+The following statement cannot run first. Stale or duplicate acknowledgements
+do not advance the scene. Reaching the end of the initial scene completes its
+session; reaching the end of a called scene returns to its caller.
+
+Incoming events do not re-enter an expression already being evaluated. They are
+processed at session step boundaries. Game state can change while a scene is
+suspended, so recheck live conditions after a wait when needed. An ordinary local
+is a snapshot and does not update itself when the game changes.
+
+## Errors and cancellation
+
+Compile errors include invalid syntax, unknown names, duplicate declarations,
+incompatible types, and missing required return values. A program with a compile
+error produces no new output and never starts execution. Unreachable code still
+undergoes these checks.
+
+A command's declared failure result is a normal value. Content can branch on it
+before using a success payload. It does not fail the session by itself.
+
+Runtime errors include invalid arithmetic, adapter exceptions, invalid values
+from a trusted adapter, and execution budget violations. An unhandled runtime
+error unwinds the active scene calls and fails that session. Remaining statements
+do not run. The error reports its Cue source location and call context; it is
+not logged and ignored. Other independent sessions remain unaffected.
+
+Failure or cancellation releases the session's waits and cancels unfinished work
+it owns. Cancellation ends the session without a return value and is distinct
+from a runtime error. A command timeout follows its declared contract: it either
+returns a typed timeout result or fails the session. Late results cannot resume
+an ended session.
+
+Completed game actions are not rolled back automatically. No command is retried
+implicitly. Retries and duplicate protection follow the capability contract,
+including idempotency keys where needed.
